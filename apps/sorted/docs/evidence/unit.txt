@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 <repo>/apps/sorted
+
+
+ Test Files  3 passed (3)
+      Tests  33 passed (33)
+   Start at  18:00:34
+   Duration  970ms (transform 136ms, setup 0ms, import 987ms, tests 224ms, environment 0ms)
+

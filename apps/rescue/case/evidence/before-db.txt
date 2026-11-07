@@ -1,0 +1,186 @@
+
+ RUN  v4.1.11 <repo>/apps/rescue-before-tmp
+
+ ❯ |db| tests/db/access.test.ts (9 tests | 7 failed) 1120ms
+     × a client's users see only that client's invoices 313ms
+     × knowing another client's invoice id doesn't help 76ms
+     × a member can't make themselves an owner 175ms
+     × a member can't move their membership to another client 111ms
+     × an owner can change a teammate's role, but not their own 77ms
+     × two owners demoting each other at the same moment: one owner remains (20 races) 89ms
+     × an owner of one client can't change roles at another, and a role belongs to one client 94ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  |db| tests/db/access.test.ts > invoices are private to each client > a client's users see only that client's invoices
+AssertionError: expected 8 to be 5 // Object.is equality
+
+- Expected
++ Received
+
+- 5
++ 8
+
+ ❯ tests/db/access.test.ts:13:29
+     11|   it("a client's users see only that client's invoices", async () => {
+     12|     const { data: fernway } = await (await as("tom")).from("invoices")…
+     13|     expect(fernway!.length).toBe(5);
+       |                             ^
+     14|     expect(new Set(fernway!.map((i) => i.client_id))).toEqual(new Set(…
+     15|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  |db| tests/db/access.test.ts > invoices are private to each client > knowing another client's invoice id doesn't help
+AssertionError: expected [ { …(10) } ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "amount_cents": 1240000,
++     "client_id": "30000000-0000-4000-8000-000000000002",
++     "created_at": "2026-11-07T18:01:48.193336+09:00",
++     "due_on": "2026-11-12",
++     "id": "40000000-0000-4000-8000-000000000202",
++     "issued_on": "2026-10-13",
++     "memo": "Fabrication quotes from the sign shop are attached separately.",
++     "number": "CB-1050",
++     "status": "open",
++     "title": "Clinic signage, 2 locations",
++   },
++ ]
+
+ ❯ tests/db/access.test.ts:22:18
+     20|   it("knowing another client's invoice id doesn't help", async () => {
+     21|     const { data } = await (await as("tom")).from("invoices").select("…
+     22|     expect(data).toEqual([]);
+       |                  ^
+     23|   });
+     24|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  |db| tests/db/access.test.ts > team access > a member can't make themselves an owner
+AssertionError: expected 'owner' to be 'member' // Object.is equality
+
+Expected: "member"
+Received: "owner"
+
+ ❯ tests/db/access.test.ts:40:50
+     38|   it("a member can't make themselves an owner", async () => {
+     39|     await (await as("tom")).from("memberships").update({ role: "owner"…
+     40|     expect((await membershipsOf("tom"))[0].role).toBe("member");
+       |                                                  ^
+     41|   });
+     42|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  |db| tests/db/access.test.ts > team access > a member can't move their membership to another client
+AssertionError: expected [ …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "id": "40000000-0000-4000-8000-000000000201",
++   },
++   {
++     "id": "40000000-0000-4000-8000-000000000202",
++   },
++   {
++     "id": "40000000-0000-4000-8000-000000000203",
++   },
++ ]
+
+ ❯ tests/db/access.test.ts:47:18
+     45|     expect((await membershipsOf("tom")).map((m) => m.client_id)).toEqu…
+     46|     const { data } = await (await as("tom")).from("invoices").select("…
+     47|     expect(data).toEqual([]);
+       |                  ^
+     48|   });
+     49|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  |db| tests/db/access.test.ts > team access > an owner can change a teammate's role, but not their own
+AssertionError: expected { code: 'PGRST202', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "PGRST202",
+  "details": "Searched for the function public.set_member_role with parameters p_client, p_role, p_user or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+  "hint": "Perhaps you meant to call the function public.is_member",
+  "message": "Could not find the function public.set_member_role(p_client, p_role, p_user) in the schema cache",
+}
+
+ ❯ tests/db/access.test.ts:52:117
+     50|   it("an owner can change a teammate's role, but not their own", async…
+     51|     const maya = await as("maya");
+     52|     expect((await maya.rpc("set_member_role", { p_client: FERNWAY, p_u…
+       |                                                                                                                     ^
+     53|     expect((await membershipsOf("tom"))[0].role).toBe("owner");
+     54|     expect((await maya.rpc("set_member_role", { p_client: FERNWAY, p_u…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  |db| tests/db/access.test.ts > team access > two owners demoting each other at the same moment: one owner remains (20 races)
+AssertionError: expected { code: 'PGRST202', …(3) } to be null
+
+- Expected:
+null
+
++ Received:
+{
+  "code": "PGRST202",
+  "details": "Searched for the function public.set_member_role with parameters p_client, p_role, p_user or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache.",
+  "hint": "Perhaps you meant to call the function public.is_member",
+  "message": "Could not find the function public.set_member_role(p_client, p_role, p_user) in the schema cache",
+}
+
+ ❯ tests/db/access.test.ts:62:121
+     60|     try {
+     61|       for (let round = 0; round < 20; round++) {
+     62|         expect((await maya.rpc("set_member_role", { p_client: FERNWAY,…
+       |                                                                                                                         ^
+     63|         const results = await Promise.all([
+     64|           maya.rpc("set_member_role", { p_client: FERNWAY, p_user: use…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+ FAIL  |db| tests/db/access.test.ts > team access > an owner of one client can't change roles at another, and a role belongs to one client
+AssertionError: expected { code: 'PGRST202', …(3) } to match object { code: '42501' }
+(3 matching properties omitted from actual)
+
+- Expected
++ Received
+
+  {
+-   "code": "42501",
++   "code": "PGRST202",
+  }
+
+ ❯ tests/db/access.test.ts:81:19
+     79|     const iris = await as("iris");
+     80|     const { error } = await iris.rpc("set_member_role", { p_client: FE…
+     81|     expect(error).toMatchObject({ code: "42501" });
+       |                   ^
+     82|     expect((await membershipsOf("tom"))[0].role).toBe("member");
+     83|     // Tom also joins Lumen. Iris makes him an owner there; at Fernway…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/7]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  7 failed | 2 passed (9)
+   Start at  18:01:47
+   Duration  3.47s (transform 51ms, setup 0ms, import 292ms, tests 1.12s, environment 0ms)
+

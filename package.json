@@ -1,0 +1,10 @@
+{
+  "name": "upwork-portfolio",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "devDependencies": {
+    "pg": "^8.16.0"
+  }
+}

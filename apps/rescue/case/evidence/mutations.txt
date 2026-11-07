@@ -1,0 +1,13 @@
+rescue: mutation check, 2026-11-07 17:58 JST, Windows 11, local stack
+Baseline (nothing broken): 9 passed (9)
+
+M1 set_member_role without the client lock: 1 failed | 8 passed (9)
+    caught by: tests/db/access.test.ts > team access > two owners demoting each other at the same moment: one owner remains (20 races)
+M2 invoices readable by every signed-in user again: 3 failed | 6 passed (9)
+    caught by: tests/db/access.test.ts > invoices are private to each client > a client's users see only that client's invoices
+    caught by: tests/db/access.test.ts > invoices are private to each client > knowing another client's invoice id doesn't help
+    caught by: tests/db/access.test.ts > team access > a member can't move their membership to another client
+M3 role column writable again: 1 failed | 8 passed (9)
+    caught by: tests/db/access.test.ts > team access > a member can't make themselves an owner
+
+Every mutation was caught by at least one test. All files were restored and the database rebuilt afterwards.

@@ -1,0 +1,18 @@
+reset signoff: bootstrap.sql, 0001_signoff.sql, seed.sql
+
+Running 12 tests using 1 worker
+
+[1/12] [desktop] › tests\e2e\approval.spec.ts:4:5 › signed-out visitors are sent to the login page and back
+[2/12] [desktop] › tests\e2e\approval.spec.ts:11:5 › wrong password shows an error and stays on the login page
+[3/12] [desktop] › tests\e2e\approval.spec.ts:20:5 › a member submits a request, an approver approves it, the member sees the result
+[4/12] [desktop] › tests\e2e\approval.spec.ts:52:5 › a rejection needs a note
+[5/12] [desktop] › tests\e2e\approval.spec.ts:63:5 › above the approval limit, an approver can't approve
+[6/12] [desktop] › tests\e2e\approval.spec.ts:85:5 › members don't get admin pages, and can't open other people's requests
+[7/12] [desktop] › tests\e2e\approval.spec.ts:105:5 › another organization sees none of this one
+[8/12] [desktop] › tests\e2e\approval.spec.ts:113:5 › an admin changes a role and the change is enforced
+[9/12] [desktop] › tests\e2e\approval.spec.ts:130:7 › signing in never sends people to another site: /\evil.invalid/x
+[10/12] [desktop] › tests\e2e\approval.spec.ts:130:7 › signing in never sends people to another site: /.//evil.invalid/x
+[11/12] [mobile] › tests\e2e\mobile.spec.ts:4:5 › no page scrolls sideways on a phone
+[12/12] [mobile] › tests\e2e\mobile.spec.ts:31:5 › a phone user can sign out
+reset signoff: bootstrap.sql, 0001_signoff.sql, seed.sql
+  12 passed (18.2s)

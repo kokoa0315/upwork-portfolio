@@ -1,0 +1,41 @@
+{
+  "name": "rescue",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev --port 4370",
+    "build": "next build",
+    "start": "next start --port 4370",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "db:reset": "node ../../devstack/cli.mjs reset",
+    "stack": "node ../../devstack/cli.mjs up",
+    "test:db": "vitest run --project db",
+    "test:unit": "vitest run --project unit",
+    "test:e2e": "playwright test",
+    "test:db:before": "node scripts/reproduce-before.mjs",
+    "test:e2e:before": "node scripts/reproduce-before-e2e.mjs",
+    "shots": "node scripts/case-shots.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.7.0",
+    "@supabase/supabase-js": "2.108.2",
+    "lucide-react": "1.24.0",
+    "next": "16.4.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.1",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "eslint": "9.39.4",
+    "eslint-config-next": "16.4.3",
+    "tailwindcss": "4.3.1",
+    "typescript": "5.9.3",
+    "vitest": "4.1.11"
+  }
+}

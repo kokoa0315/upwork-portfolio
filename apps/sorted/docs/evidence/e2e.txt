@@ -1,0 +1,29 @@
+reset sorted: bootstrap.sql, 0001_sorted.sql, seed.sql
+
+Running 11 tests using 1 worker
+
+[1/11] [desktop] › tests\e2e\inbox.spec.ts:6:5 › a signed email is triaged and waits for a person
+[2/11] [desktop] › tests\e2e\inbox.spec.ts:22:5 › editing and approving records one reply, in the outbox and the history
+[3/11] [desktop] › tests\e2e\inbox.spec.ts:44:5 › dismissing sends nothing
+[4/11] [desktop] › tests\e2e\inbox.spec.ts:54:5 › an email that tries to instruct the AI is shown as plain text and flagged
+[5/11] [desktop] › tests\e2e\inbox.spec.ts:67:5 › another team can't see or open Tidebook's message
+[6/11] [desktop] › tests\e2e\inbox.spec.ts:83:5 › the webhook rejects unsigned, tampered, stale, wrong-team, unknown-team and malformed deliveries
+[7/11] [desktop] › tests\e2e\inbox.spec.ts:108:5 › the worker endpoint needs its secret
+[8/11] [desktop] › tests\e2e\inbox.spec.ts:119:7 › signing in never sends people to another site: /\evil.invalid/x
+[9/11] [desktop] › tests\e2e\inbox.spec.ts:119:7 › signing in never sends people to another site: /.//evil.invalid/x
+[10/11] [mobile] › tests\e2e\mobile.spec.ts:4:5 › no page scrolls sideways on a phone, including a long email
+[11/11] [mobile] › tests\e2e\mobile.spec.ts:20:5 › a phone user can sign out
+reset sorted: bootstrap.sql, 0001_sorted.sql, seed.sql
+sample-01 202 {"id":"b23dd85d-313c-43b6-b4c8-ed24d5ebdab5","duplicate":false}
+sample-02 202 {"id":"0d9170ca-275c-4228-afd3-77142a253674","duplicate":false}
+sample-03 202 {"id":"886a0ee9-f6e5-427f-8766-7b04b22d02f9","duplicate":false}
+sample-04 202 {"id":"275da9d8-7993-4e9a-ac1b-47a62034552f","duplicate":false}
+sample-05 202 {"id":"ddfcc9f4-c504-43eb-b288-dfda56d2ef31","duplicate":false}
+sample-06 202 {"id":"78452d1b-c269-432f-abac-5b92e5e772f7","duplicate":false}
+sample-07 202 {"id":"82148989-ea7e-4eb1-a502-7c1f72544285","duplicate":false}
+sample-08 202 {"id":"738b4954-077e-43dd-84bb-2fa97c3086e2","duplicate":false}
+sample-09 202 {"id":"d4ada4c7-a58d-4447-a286-2a10ed782dcc","duplicate":false}
+sample-10 202 {"id":"9248d000-50ce-4f0d-93d6-05211c97ee8c","duplicate":false}
+sample-11 202 {"id":"c4075796-2d90-438e-91a2-aa7e1ce76f9a","duplicate":false}
+sample-12 202 {"id":"58240911-0bf4-427e-b726-dd08b67dd551","duplicate":false}
+  11 passed (14.1s)

@@ -1,0 +1,35 @@
+sorted: mutation check, 2026-11-07 17:56 JST, Windows 11, local stack
+Baseline (nothing broken): 19 passed (19)
+
+M1 agents may call the worker's queue functions: 1 failed | 18 passed (19)
+    caught by: tests/db/access.test.ts > what signed-in agents can't do > can't call the ingestion or queue functions that the webhook and worker use
+M2 approve_reply without the row lock: 1 failed | 18 passed (19)
+    caught by: tests/db/pipeline.test.ts > review > two agents approving at the same moment: exactly one reply is recorded
+M3 claim without FOR UPDATE SKIP LOCKED: 1 failed | 18 passed (19)
+    caught by: tests/db/pipeline.test.ts > worker > three workers running at once never take the same job (10 races)
+M4 messages readable by every team: 1 failed | 18 passed (19)
+    caught by: tests/db/access.test.ts > tenant isolation > another team sees none of Tidebook's messages, triage, replies or events
+M5 retries never give up: 2 failed | 17 passed (19)
+    caught by: tests/db/pipeline.test.ts > worker > retries a temporary failure with backoff, then hands the message to a person after 3 attempts
+    caught by: tests/db/pipeline.test.ts > worker > doesn't retry a refusal: it goes straight to a person
+M6 requeue keeps the old result: 2 failed | 17 passed (19)
+    caught by: tests/db/pipeline.test.ts > worker > a worker from before 'New draft' can't save its stale draft over the new attempt
+    caught by: tests/db/pipeline.test.ts > review > asking for a new draft clears the old one and queues the message again
+M7 approve_reply ignores the team check: 1 failed | 18 passed (19)
+    caught by: tests/db/access.test.ts > tenant isolation > another team can't approve, dismiss or requeue Tidebook's message
+M8 crashed jobs reclaimed forever: 1 failed | 18 passed (19)
+    caught by: tests/db/pipeline.test.ts > worker > an email that crashes the worker on every attempt goes to a person instead of looping
+M9 a late worker can complete a job that was taken over: 2 failed | 17 passed (19)
+    caught by: tests/db/pipeline.test.ts > worker > a worker that comes back after its job was taken over can't overwrite the newer attempt
+    caught by: tests/db/pipeline.test.ts > worker > a worker from before 'New draft' can't save its stale draft over the new attempt
+M13 a reclaimed job keeps its old claim token: 1 failed | 18 passed (19)
+    caught by: tests/db/pipeline.test.ts > worker > a worker that comes back after its job was taken over can't overwrite the newer attempt
+M10 row-level security off on messages: 2 failed | 17 passed (19)
+    caught by: tests/db/access.test.ts > tenant isolation > anonymous callers can read nothing and call nothing
+    caught by: tests/db/access.test.ts > tenant isolation > another team sees none of Tidebook's messages, triage, replies or events
+M11 signature without the team id: 1 failed | 32 passed (33)
+    caught by: tests/unit/webhook.test.ts > webhook signature > rejects a delivery signed for one team and posted to another
+M12 only a lowercase </email> neutralized: 1 failed | 32 passed (33)
+    caught by: tests/unit/triage.test.ts > prompt > wraps the email as data and stops it from closing the data block
+
+Every mutation was caught by at least one test. All files were restored and the database rebuilt afterwards.

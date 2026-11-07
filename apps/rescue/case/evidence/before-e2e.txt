@@ -1,0 +1,407 @@
+reset rescue: bootstrap.sql, 0001_cobalt.sql, 0002_policies.sql, seed.sql
+
+Running 11 tests using 1 worker
+
+[1/11] [desktop] › tests\e2e\portal.spec.ts:8:7 › session › stays signed in after the access token expires
+  1) [desktop] › tests\e2e\portal.spec.ts:8:7 › session › stays signed in after the access token expires 
+
+    Error: still signed in
+
+    expect(page).toHaveURL(expected) failed
+
+    Expected pattern: /\/invoices$/
+    Received string:  "http://localhost:4370/login"
+    Timeout: 5000ms
+
+    Call log:
+      - still signed in with timeout 5000ms
+        14 × locator resolved to <html lang="en" class="_8NX9hq_variable z61v7q_variable">…</html>
+           - unexpected value "http://localhost:4370/login"
+
+
+      18 |     await page.waitForTimeout(12_000);
+      19 |     await page.goto("/invoices");
+    > 20 |     await expect(page, "still signed in").toHaveURL(/\/invoices$/);
+         |                                           ^
+      21 |     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Invoices");
+      22 |   });
+      23 |
+        at <repo>\apps\rescue-before-tmp\tests\e2e\portal.spec.ts:20:43
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\portal-session-stays-signe-e57a7-er-the-access-token-expires-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\portal-session-stays-signe-e57a7-er-the-access-token-expires-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\portal-session-stays-signe-e57a7-er-the-access-token-expires-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\portal-session-stays-signe-e57a7-er-the-access-token-expires-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[2/11] [desktop] › tests\e2e\portal.spec.ts:24:7 › session › signing out ends the session
+[3/11] [desktop] › tests\e2e\portal.spec.ts:33:7 › tenant isolation in the UI › Fernway sees only Fernway's invoices
+  2) [desktop] › tests\e2e\portal.spec.ts:33:7 › tenant isolation in the UI › Fernway sees only Fernway's invoices 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  getByText('CB-1050').visible()
+    Expected: 0
+    Received: 1
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" getByText('CB-1050').visible() with timeout 5000ms
+      - waiting for getByText('CB-1050').visible()
+        14 × locator resolved to 1 element
+           - unexpected value "1"
+
+
+      34 |     await signIn(page, "tom");
+      35 |     await expect(page.getByText("CB-1052").filter({ visible: true })).toBeVisible();
+    > 36 |     await expect(page.getByText("CB-1050").filter({ visible: true })).toHaveCount(0); // Lumen's
+         |                                                                       ^
+      37 |     await expect(page.getByText("Clinic signage")).toHaveCount(0);
+      38 |   });
+      39 |
+        at <repo>\apps\rescue-before-tmp\tests\e2e\portal.spec.ts:36:71
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\portal-tenant-isolation-in-70542-ees-only-Fernway-s-invoices-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\portal-tenant-isolation-in-70542-ees-only-Fernway-s-invoices-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\portal-tenant-isolation-in-70542-ees-only-Fernway-s-invoices-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\portal-tenant-isolation-in-70542-ees-only-Fernway-s-invoices-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[4/11] [desktop] › tests\e2e\portal.spec.ts:40:7 › tenant isolation in the UI › opening another client's invoice URL shows not found
+  3) [desktop] › tests\e2e\portal.spec.ts:40:7 › tenant isolation in the UI › opening another client's invoice URL shows not found 
+
+    Error: expect(locator).toBeVisible() failed
+
+    Locator: getByRole('heading', { name: 'Invoice not found' })
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+      - Expect "toBeVisible" getByRole('heading', { name: 'Invoice not found' }) with timeout 5000ms
+      - waiting for getByRole('heading', { name: 'Invoice not found' })
+
+
+      41 |     await signIn(page, "tom");
+      42 |     await page.goto(LUMEN_INVOICE);
+    > 43 |     await expect(page.getByRole("heading", { name: "Invoice not found" })).toBeVisible();
+         |                                                                            ^
+      44 |     await expect(page.getByText("Clinic signage")).toHaveCount(0);
+      45 |   });
+      46 | });
+        at <repo>\apps\rescue-before-tmp\tests\e2e\portal.spec.ts:43:76
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\portal-tenant-isolation-in-f728c-invoice-URL-shows-not-found-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\portal-tenant-isolation-in-f728c-invoice-URL-shows-not-found-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\portal-tenant-isolation-in-f728c-invoice-URL-shows-not-found-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\portal-tenant-isolation-in-f728c-invoice-URL-shows-not-found-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[5/11] [desktop] › tests\e2e\portal.spec.ts:49:7 › team › an owner changes a teammate's role and it sticks
+[6/11] [desktop] › tests\e2e\portal.spec.ts:60:7 › team › a member sees no role menu and can change their own emails
+[7/11] [desktop] › tests\e2e\portal.spec.ts:77:7 › signing in never sends people to another site: /\evil.invalid/x
+  4) [desktop] › tests\e2e\portal.spec.ts:77:7 › signing in never sends people to another site: /\evil.invalid/x 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: "http://localhost:4370/invoices"
+    Received: "chrome-error://chromewebdata/"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html>…</html>
+           - unexpected value "chrome-error://chromewebdata/"
+
+
+      77 |   test(`signing in never sends people to another site: ${next}`, async ({ page }) => {
+      78 |     await signIn(page, "maya", next);
+    > 79 |     await expect(page).toHaveURL("/invoices");
+         |                        ^
+      80 |   });
+      81 | }
+      82 |
+        at <repo>\apps\rescue-before-tmp\tests\e2e\portal.spec.ts:79:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[8/11] [desktop] › tests\e2e\portal.spec.ts:77:7 › signing in never sends people to another site: /.//evil.invalid/x
+  5) [desktop] › tests\e2e\portal.spec.ts:77:7 › signing in never sends people to another site: /.//evil.invalid/x 
+
+    Error: expect(page).toHaveURL(expected) failed
+
+    Expected: "http://localhost:4370/invoices"
+    Received: "chrome-error://chromewebdata/"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveURL" with timeout 5000ms
+        14 × locator resolved to <html>…</html>
+           - unexpected value "chrome-error://chromewebdata/"
+
+
+      77 |   test(`signing in never sends people to another site: ${next}`, async ({ page }) => {
+      78 |     await signIn(page, "maya", next);
+    > 79 |     await expect(page).toHaveURL("/invoices");
+         |                        ^
+      80 |   });
+      81 | }
+      82 |
+        at <repo>\apps\rescue-before-tmp\tests\e2e\portal.spec.ts:79:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\portal-signing-in-never-se-a94f0-another-site-evil-invalid-x-desktop\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[9/11] [mobile] › tests\e2e\mobile.spec.ts:4:5 › no page scrolls sideways on a phone
+  6) [mobile] › tests\e2e\mobile.spec.ts:4:5 › no page scrolls sideways on a phone ─────────────────
+
+    Error: /invoices
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: false
+    Received: true
+
+       9 |     await page.goto(path);
+      10 |     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    > 11 |     expect(await overflowsX(page), path).toBe(false);
+         |                                          ^
+      12 |   }
+      13 | });
+      14 |
+        at <repo>\apps\rescue-before-tmp\tests\e2e\mobile.spec.ts:11:42
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\mobile-no-page-scrolls-sideways-on-a-phone-mobile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\mobile-no-page-scrolls-sideways-on-a-phone-mobile\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mobile-no-page-scrolls-sideways-on-a-phone-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mobile-no-page-scrolls-sideways-on-a-phone-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[10/11] [mobile] › tests\e2e\mobile.spec.ts:15:5 › every invoice can be opened from the list on a phone
+  7) [mobile] › tests\e2e\mobile.spec.ts:15:5 › every invoice can be opened from the list on a phone 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('a[href^="/invoices/"]').visible()
+    Expected: 5
+    Received: 8
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('a[href^="/invoices/"]').visible() with timeout 5000ms
+      - waiting for locator('a[href^="/invoices/"]').visible()
+        14 × locator resolved to 8 elements
+           - unexpected value "8"
+
+
+      18 |   // Every visible link to an invoice (the card list on a phone; the shipped version showed the table instead).
+      19 |   const links = page.locator('a[href^="/invoices/"]').filter({ visible: true });
+    > 20 |   await expect(links).toHaveCount(5);
+         |                       ^
+      21 |   for (const link of await links.all()) {
+      22 |     const box = (await link.boundingBox())!;
+      23 |     expect(box.x + box.width, "link is inside the screen").toBeLessThanOrEqual(viewport.width);
+        at <repo>\apps\rescue-before-tmp\tests\e2e\mobile.spec.ts:20:23
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\mobile-every-invoice-can-be-opened-from-the-list-on-a-phone-mobile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\mobile-every-invoice-can-be-opened-from-the-list-on-a-phone-mobile\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mobile-every-invoice-can-be-opened-from-the-list-on-a-phone-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mobile-every-invoice-can-be-opened-from-the-list-on-a-phone-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[11/11] [mobile] › tests\e2e\mobile.spec.ts:30:5 › a phone user can sign out
+  8) [mobile] › tests\e2e\mobile.spec.ts:30:5 › a phone user can sign out ──────────────────────────
+
+    Test timeout of 30000ms exceeded.
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+      - waiting for getByRole('button', { name: 'Sign out' }).visible()
+        - locator resolved to <button class="rounded-lg px-2 py-1.5 text-sm text-mute hover:bg-canvas hover:text-ink">Sign out</button>
+      - attempting click action
+        - waiting for element to be visible, enabled and stable
+        - element is visible, enabled and stable
+        - scrolling into view if needed
+        - done scrolling
+        - <span class="text-sm text-mute">Fernway Coffee Co.</span> from <a href="/invoices" class="flex items-center gap-3">…</a> subtree intercepts pointer events
+      - retrying click action
+        - waiting for element to be visible, enabled and stable
+        - element is visible, enabled and stable
+        - scrolling into view if needed
+        - done scrolling
+        - <a href="/team" class="rounded-lg px-3 py-2 text-sm transition-colors text-ink-2 hover:bg-canvas">Team</a> from <nav aria-label="Main" class="flex gap-1">…</nav> subtree intercepts pointer events
+      - retrying click action
+        - waiting 20ms
+        - waiting for element to be visible, enabled and stable
+        - element is visible, enabled and stable
+        - scrolling into view if needed
+        - done scrolling
+        - <span class="text-sm text-mute">Fernway Coffee Co.</span> from <a href="/invoices" class="flex items-center gap-3">…</a> subtree intercepts pointer events
+      2 × retrying click action
+          - waiting 100ms
+          - waiting for element to be visible, enabled and stable
+          - element is visible, enabled and stable
+          - scrolling into view if needed
+          - done scrolling
+          - <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6 whitespace-nowrap">…</div> intercepts pointer events
+      13 × retrying click action
+           - waiting 500ms
+           - waiting for element to be visible, enabled and stable
+           - element is visible, enabled and stable
+           - scrolling into view if needed
+           - done scrolling
+           - <a href="/team" class="rounded-lg px-3 py-2 text-sm transition-colors text-ink-2 hover:bg-canvas">Team</a> from <nav aria-label="Main" class="flex gap-1">…</nav> subtree intercepts pointer events
+         - retrying click action
+           - waiting 500ms
+           - waiting for element to be visible, enabled and stable
+           - element is visible, enabled and stable
+           - scrolling into view if needed
+           - done scrolling
+           - <span class="text-sm text-mute">Fernway Coffee Co.</span> from <a href="/invoices" class="flex items-center gap-3">…</a> subtree intercepts pointer events
+         - retrying click action
+           - waiting 500ms
+           - waiting for element to be visible, enabled and stable
+           - element is visible, enabled and stable
+           - scrolling into view if needed
+           - done scrolling
+           - <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6 whitespace-nowrap">…</div> intercepts pointer events
+         - retrying click action
+           - waiting 500ms
+           - waiting for element to be visible, enabled and stable
+           - element is visible, enabled and stable
+           - scrolling into view if needed
+           - done scrolling
+           - <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6 whitespace-nowrap">…</div> intercepts pointer events
+      - retrying click action
+        - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+        - element is visible, enabled and stable
+        - scrolling into view if needed
+        - done scrolling
+        - <a href="/team" class="rounded-lg px-3 py-2 text-sm transition-colors text-ink-2 hover:bg-canvas">Team</a> from <nav aria-label="Main" class="flex gap-1">…</nav> subtree intercepts pointer events
+      - retrying click action
+        - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+        - element is visible, enabled and stable
+        - scrolling into view if needed
+        - done scrolling
+        - <span class="text-sm text-mute">Fernway Coffee Co.</span> from <a href="/invoices" class="flex items-center gap-3">…</a> subtree intercepts pointer events
+      - retrying click action
+        - waiting 500ms
+        - waiting for element to be visible, enabled and stable
+        - element is visible, enabled and stable
+        - scrolling into view if needed
+        - done scrolling
+        - <div class="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6 whitespace-nowrap">…</div> intercepts pointer events
+      - retrying click action
+        - waiting 500ms
+
+
+       at helpers.ts:14
+
+      12 |
+      13 | export async function signOut(page: Page) {
+    > 14 |   await page.getByRole("button", { name: "Sign out" }).filter({ visible: true }).click();
+         |                                                                                  ^
+      15 |   await expect(page).toHaveURL(/\/login/);
+      16 | }
+      17 |
+        at signOut (<repo>\apps\rescue-before-tmp\tests\e2e\helpers.ts:14:82)
+        at <repo>\apps\rescue-before-tmp\tests\e2e\mobile.spec.ts:32:16
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results\mobile-a-phone-user-can-sign-out-mobile\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results\mobile-a-phone-user-can-sign-out-mobile\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\mobile-a-phone-user-can-sign-out-mobile\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\mobile-a-phone-user-can-sign-out-mobile\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+reset rescue: bootstrap.sql, 0001_cobalt.sql, 0002_policies.sql, seed.sql
+  8 failed
+    [desktop] › tests\e2e\portal.spec.ts:8:7 › session › stays signed in after the access token expires 
+    [desktop] › tests\e2e\portal.spec.ts:33:7 › tenant isolation in the UI › Fernway sees only Fernway's invoices 
+    [desktop] › tests\e2e\portal.spec.ts:40:7 › tenant isolation in the UI › opening another client's invoice URL shows not found 
+    [desktop] › tests\e2e\portal.spec.ts:77:7 › signing in never sends people to another site: /\evil.invalid/x 
+    [desktop] › tests\e2e\portal.spec.ts:77:7 › signing in never sends people to another site: /.//evil.invalid/x 
+    [mobile] › tests\e2e\mobile.spec.ts:4:5 › no page scrolls sideways on a phone ──────────────────
+    [mobile] › tests\e2e\mobile.spec.ts:15:5 › every invoice can be opened from the list on a phone 
+    [mobile] › tests\e2e\mobile.spec.ts:30:5 › a phone user can sign out ───────────────────────────
+  3 passed (3.3m)

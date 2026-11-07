@@ -1,0 +1,310 @@
+diff --git a/proxy.ts b/proxy.ts
+index 633760b..f2cb244 100644
+--- a/proxy.ts
++++ b/proxy.ts
+@@ -1,16 +1,39 @@
++import { createServerClient } from "@supabase/ssr";
+ import { NextResponse, type NextRequest } from "next/server";
+ 
+-// Keeps signed-out visitors on /login.
+-export function proxy(request: NextRequest) {
+-  const signedIn = request.cookies.getAll().some((c) => c.name.startsWith("sb-") && c.name.includes("-auth-token"));
++// Refreshes the Supabase session on every request and keeps signed-out visitors on /login.
++//
++// This is the only place a refreshed session can be saved: Server Components can read cookies but not write them.
++// Without it, a page refreshes the expired token, can't store the new one, and the next request presents a refresh
++// token that has already been used, so the user is signed out.
++export async function proxy(request: NextRequest) {
++  let response = NextResponse.next({ request });
++  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
++    cookies: {
++      getAll: () => request.cookies.getAll(),
++      setAll(list) {
++        // Pass the new tokens to this request's pages and back to the browser.
++        list.forEach(({ name, value }) => request.cookies.set(name, value));
++        response = NextResponse.next({ request });
++        list.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
++      },
++    },
++  });
++
++  // getUser() validates the token with the auth server and refreshes it if needed. A cookie merely existing
++  // (the old check) says nothing about whether the session is still valid.
++  const {
++    data: { user },
++  } = await supabase.auth.getUser();
+   const { pathname, search } = request.nextUrl;
+-  if (!signedIn && pathname !== "/login") {
++
++  if (!user && pathname !== "/login") {
+     const url = request.nextUrl.clone();
+     url.pathname = "/login";
+     url.search = pathname === "/" ? "" : `?next=${encodeURIComponent(pathname + search)}`;
+     return NextResponse.redirect(url);
+   }
+-  return NextResponse.next();
++  return response;
+ }
+ 
+ export const config = {
+diff --git a/app/(app)/layout.tsx b/app/(app)/layout.tsx
+index 708c26d..13ea0b8 100644
+--- a/app/(app)/layout.tsx
++++ b/app/(app)/layout.tsx
+@@ -11,22 +11,28 @@ export default async function AppLayout({ children }: { children: React.ReactNod
+   return (
+     <div className="min-h-dvh">
+       <header className="border-b border-line bg-surface">
+-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-6 whitespace-nowrap">
+-          <Link href="/invoices" className="flex items-center gap-3">
++        {/* Phones: logo and sign-out on the first row, navigation on the second. Wider screens: one row. */}
++        <div className="mx-auto grid max-w-6xl grid-cols-[1fr_auto] items-center gap-x-6 gap-y-2 px-4 py-3 sm:flex sm:h-16 sm:px-6 sm:py-0">
++          <Link href="/invoices" className="flex min-w-0 items-center gap-3">
+             <Logo />
+-            <span className="text-sm text-mute">{s.clientName}</span>
++            <span className="truncate text-sm text-mute">{s.clientName}</span>
+           </Link>
+-          <NavLinks />
+-          <form action={signOut} className="ml-auto flex items-center gap-3">
++          <div className="col-span-2 row-start-2 -mx-1 sm:mx-0">
++            <NavLinks />
++          </div>
++          <form action={signOut} className="flex items-center gap-3 sm:ml-auto">
+             <Avatar name={s.name} />
+-            <span className="text-sm">
++            <span className="hidden text-sm sm:inline">
+               {s.name} <span className="text-mute">· {roleLabel[s.role]}</span>
+             </span>
+-            <button className="rounded-lg px-2 py-1.5 text-sm text-mute hover:bg-canvas hover:text-ink">Sign out</button>
++            <span className="sr-only sm:hidden">
++              Signed in as {s.name}, {roleLabel[s.role]}
++            </span>
++            <button className="min-h-9 rounded-lg px-2 py-1.5 text-sm text-mute hover:bg-canvas hover:text-ink">Sign out</button>
+           </form>
+         </div>
+       </header>
+-      <main className="mx-auto w-full max-w-6xl px-6 py-10">{children}</main>
++      <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-10">{children}</main>
+     </div>
+   );
+ }
+diff --git a/app/(app)/invoices/page.tsx b/app/(app)/invoices/page.tsx
+index d35f50d..9ce2f93 100644
+--- a/app/(app)/invoices/page.tsx
++++ b/app/(app)/invoices/page.tsx
+@@ -16,7 +16,7 @@ export default async function InvoicesPage() {
+   return (
+     <>
+       <PageHeader title="Invoices" description="Everything Cobalt Studio has billed you, newest first." />
+-      <div className="mb-6 grid grid-cols-3 gap-4">
++      <div className="mb-6 grid gap-3 sm:grid-cols-3 sm:gap-4">
+         <Stat label="Outstanding" value={sum(open)} note={`${open.length} invoices`} />
+         <Stat label="Overdue" value={sum(overdue)} note={overdue.length ? "Please pay these first" : "Nothing overdue"} tone={overdue.length ? "no" : undefined} />
+         <Stat label="Paid" value={sum(paid)} note={`${paid.length} invoices`} />
+@@ -25,41 +25,64 @@ export default async function InvoicesPage() {
+         {invoices.length === 0 ? (
+           <EmptyState title="No invoices yet" />
+         ) : (
+-          <table className="w-full min-w-[56rem] text-sm">
+-            <thead className="border-b border-line text-left text-xs text-mute">
+-              <tr>
+-                <th className="px-5 py-3 font-medium">Invoice</th>
+-                <th className="px-3 py-3 font-medium">Issued</th>
+-                <th className="px-3 py-3 font-medium">Due</th>
+-                <th className="px-3 py-3 font-medium">Status</th>
+-                <th className="px-3 py-3 font-medium">Memo</th>
+-                <th className="px-5 py-3 text-right font-medium">Amount</th>
+-                <th className="px-5 py-3" />
+-              </tr>
+-            </thead>
+-            <tbody className="divide-y divide-line">
++          <>
++            {/* Phones get a list; the table needs about 900px. */}
++            <ul className="divide-y divide-line md:hidden">
+               {invoices.map((i) => (
+-                <tr key={i.id}>
+-                  <td className="px-5 py-3">
+-                    <p className="font-medium">{i.title}</p>
+-                    <p className="font-mono text-xs text-mute">{i.number}</p>
+-                  </td>
+-                  <td className="px-3 py-3 whitespace-nowrap text-ink-2">{date(i.issued_on)}</td>
+-                  <td className="px-3 py-3 whitespace-nowrap text-ink-2">{date(i.due_on)}</td>
+-                  <td className="px-3 py-3">
+-                    <StatusBadge status={i.status} />
+-                  </td>
+-                  <td className="px-3 py-3 whitespace-nowrap text-mute">{i.memo || "—"}</td>
+-                  <td className="px-5 py-3 text-right font-medium tabular-nums">{money(i.amount_cents)}</td>
+-                  <td className="px-5 py-3 text-right">
+-                    <Link href={`/invoices/${i.id}`} className="font-medium text-brand hover:underline">
+-                      View
+-                    </Link>
+-                  </td>
+-                </tr>
++                <li key={i.id}>
++                  <Link href={`/invoices/${i.id}`} className="grid gap-1.5 px-4 py-4 active:bg-canvas">
++                    <span className="flex items-start justify-between gap-3">
++                      <span className="min-w-0 font-medium">{i.title}</span>
++                      <span className="shrink-0 font-medium tabular-nums">{money(i.amount_cents)}</span>
++                    </span>
++                    <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-mute">
++                      <StatusBadge status={i.status} />
++                      <span className="font-mono">{i.number}</span>
++                      <span>Due {date(i.due_on)}</span>
++                    </span>
++                    {i.memo ? <span className="line-clamp-2 text-sm text-mute [overflow-wrap:anywhere]">{i.memo}</span> : null}
++                  </Link>
++                </li>
+               ))}
+-            </tbody>
+-          </table>
++            </ul>
++            <table className="hidden w-full text-sm md:table">
++              <thead className="border-b border-line text-left text-xs text-mute">
++                <tr>
++                  <th className="px-5 py-3 font-medium">Invoice</th>
++                  <th className="px-3 py-3 font-medium">Issued</th>
++                  <th className="px-3 py-3 font-medium">Due</th>
++                  <th className="px-3 py-3 font-medium">Status</th>
++                  <th className="px-3 py-3 font-medium">Memo</th>
++                  <th className="px-5 py-3 text-right font-medium">Amount</th>
++                  <th className="px-5 py-3">
++                    <span className="sr-only">Open</span>
++                  </th>
++                </tr>
++              </thead>
++              <tbody className="divide-y divide-line">
++                {invoices.map((i) => (
++                  <tr key={i.id}>
++                    <td className="px-5 py-3">
++                      <p className="font-medium">{i.title}</p>
++                      <p className="font-mono text-xs text-mute">{i.number}</p>
++                    </td>
++                    <td className="px-3 py-3 whitespace-nowrap text-ink-2">{date(i.issued_on)}</td>
++                    <td className="px-3 py-3 whitespace-nowrap text-ink-2">{date(i.due_on)}</td>
++                    <td className="px-3 py-3">
++                      <StatusBadge status={i.status} />
++                    </td>
++                    <td className="max-w-80 px-3 py-3 text-mute [overflow-wrap:anywhere]">{i.memo || "—"}</td>
++                    <td className="px-5 py-3 text-right font-medium tabular-nums">{money(i.amount_cents)}</td>
++                    <td className="px-5 py-3 text-right">
++                      <Link href={`/invoices/${i.id}`} aria-label={`View ${i.number}, ${i.title}`} className="inline-flex min-h-6 items-center font-medium text-brand hover:underline">
++                        View
++                      </Link>
++                    </td>
++                  </tr>
++                ))}
++              </tbody>
++            </table>
++          </>
+         )}
+       </Card>
+     </>
+diff --git a/app/(app)/team/actions.ts b/app/(app)/team/actions.ts
+index 7fd70fb..69ef00c 100644
+--- a/app/(app)/team/actions.ts
++++ b/app/(app)/team/actions.ts
+@@ -9,9 +9,10 @@ export type Result = { error?: string };
+ export async function setRole(userId: string, role: "owner" | "member"): Promise<Result> {
+   const s = await getSession();
+   if (s.role !== "owner") return { error: "Only owners can change roles." };
++  // The database checks this again: only an owner of the same client, and never on their own row.
+   const supabase = await createClient();
+-  const { error } = await supabase.from("memberships").update({ role }).eq("client_id", s.clientId).eq("user_id", userId);
+-  if (error) return { error: "Couldn't change the role. Try again." };
++  const { error } = await supabase.rpc("set_member_role", { p_client: s.clientId, p_user: userId, p_role: role });
++  if (error) return { error: error.code === "42501" ? "You can't change this person's role." : "Couldn't change the role. Try again." };
+   revalidatePath("/team");
+   return {};
+ }
+diff --git a/app/login/actions.ts b/app/login/actions.ts
+index 0bc04c0..ca3d66c 100644
+--- a/app/login/actions.ts
++++ b/app/login/actions.ts
+@@ -2,6 +2,7 @@
+ 
+ import { redirect } from "next/navigation";
+ import { z } from "zod";
++import { safeNext } from "@/lib/safe-next";
+ import { createClient } from "@/lib/supabase/server";
+ 
+ const schema = z.object({
+@@ -21,9 +22,7 @@ export async function signIn(_: LoginState, form: FormData): Promise<LoginState>
+   const { error } = await supabase.auth.signInWithPassword({ email: parsed.data.email, password: parsed.data.password });
+   if (error) return { error: "That email and password don't match an account.", email };
+ 
+-  // Only same-site paths, so the ?next= parameter cannot send people elsewhere.
+-  const next = parsed.data.next?.startsWith("/") && !parsed.data.next.startsWith("//") ? parsed.data.next : "/invoices";
+-  redirect(next);
++  redirect(safeNext(parsed.data.next, "/invoices"));
+ }
+ 
+ export async function signOut() {
+diff --git a/lib/safe-next.ts b/lib/safe-next.ts
+new file mode 100644
+index 0000000..e7756ba
+--- /dev/null
++++ b/lib/safe-next.ts
+@@ -0,0 +1,17 @@
++/**
++ * Where to go after signing in: a path on this site, or `fallback`. Checking for a leading "/" isn't enough:
++ * browsers read "/\evil.example" as "//evil.example", another site, and "/.//evil.example" normalizes to it.
++ * So the path is resolved against a placeholder origin, kept only if it stays on that origin, and the normalized
++ * result is checked again, because that result is what the browser receives.
++ */
++export function safeNext(next: string | undefined, fallback: string) {
++  if (!next?.startsWith("/") || next.includes("\\")) return fallback;
++  const origin = "http://this-site.invalid";
++  try {
++    const url = new URL(next, origin);
++    const path = `${url.pathname}${url.search}${url.hash}`;
++    return url.origin === origin && !path.startsWith("//") ? path : fallback;
++  } catch {
++    return fallback;
++  }
++}
+diff --git a/supabase/migrations/0003_fix_tenant_access.sql b/supabase/migrations/0003_fix_tenant_access.sql
+new file mode 100644
+index 0000000..4104ef3
+--- /dev/null
++++ b/supabase/migrations/0003_fix_tenant_access.sql
+@@ -0,0 +1,40 @@
++-- Fix for two access bugs in 0002, written as a new migration so it can be applied to the live database.
++--
++-- 1. Invoices were readable by any signed-in user ("auth.uid() is not null"), so every client could list and open
++--    every other client's invoices. Now only members of the invoice's client can read it.
++-- 2. The membership update policy let people update their own row, meant for the email toggle. It also let a
++--    member change their own role to owner. Now users can update only the email toggle on their own row, and role
++--    changes go through set_member_role(), which only an owner of the same client can call, never on themselves.
++
++drop policy "signed-in users read invoices" on public.invoices;
++create policy "members read their client's invoices" on public.invoices for select to authenticated
++  using (public.is_member(client_id));
++
++drop policy "update own membership or as owner" on public.memberships;
++revoke update on public.memberships from authenticated, anon;
++grant update (notify_on_invoice) on public.memberships to authenticated;
++create policy "update own email setting" on public.memberships for update to authenticated
++  using (user_id = auth.uid()) with check (user_id = auth.uid());
++
++-- The caller names the client: someone can belong to more than one, and a role is per client.
++create function public.set_member_role(p_client uuid, p_user uuid, p_role public.member_role) returns void
++language plpgsql security definer set search_path = public as $$
++declare v_client uuid := p_client;
++begin
++  -- One role change per client at a time, and the owner check after the lock. Without this, two owners demoting
++  -- each other at the same moment both pass the check, and the client is left with no owner.
++  perform 1 from public.clients where id = v_client for update;
++  if v_client is null or not public.is_owner(v_client) then
++    raise exception 'only an owner of this client can change roles' using errcode = '42501';
++  end if;
++  if p_user = auth.uid() then
++    raise exception 'owners can''t change their own role' using errcode = '42501';
++  end if;
++  update public.memberships set role = p_role where client_id = v_client and user_id = p_user;
++  if not found then
++    raise exception 'not a member of this client' using errcode = 'P0002';
++  end if;
++end $$;
++
++revoke execute on function public.set_member_role(uuid, uuid, public.member_role) from anon, public;
++grant execute on function public.set_member_role(uuid, uuid, public.member_role) to authenticated;

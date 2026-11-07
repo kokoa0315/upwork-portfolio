@@ -1,0 +1,35 @@
+signoff: mutation check, 2026-11-07 17:54 JST, Windows 11, local stack
+Baseline (nothing broken): 28 passed (28)
+
+M1 requests readable by every signed-in user: 4 failed | 24 passed (28)
+    caught by: tests/db/access.test.ts > who can see what > a member sees only their own requests
+    caught by: tests/db/access.test.ts > who can see what > reviewers see the whole organization and nothing outside it
+    caught by: tests/db/access.test.ts > who can see what > another tenant's owner sees none of Northwind's data
+    caught by: tests/db/workflow.test.ts > roles > a promotion takes effect immediately, and so does the demotion
+M2 audit log writable by users: 1 failed | 27 passed (28)
+    caught by: tests/db/access.test.ts > who can see what > the audit log is append-only for users
+M3 state-machine trigger removed: 1 failed | 27 passed (28)
+    caught by: tests/db/workflow.test.ts > request lifecycle > the status rules hold even for code that bypasses RLS and the column grants
+M4 members may update their own membership: 1 failed | 27 passed (28)
+    caught by: tests/db/access.test.ts > who can see what > a member can't promote themselves by writing to memberships
+M5 set_member_role without the organization lock: 1 failed | 27 passed (28)
+    caught by: tests/db/workflow.test.ts > roles > two owners demoting each other at the same moment: one owner remains (20 races)
+M6 functions left executable by anon: 1 failed | 27 passed (28)
+    caught by: tests/db/access.test.ts > who can see what > anonymous visitors can't read requests or call the RPCs
+M7 row-level security off on requests: 8 failed | 20 passed (28)
+    caught by: tests/db/access.test.ts > who can see what > anonymous visitors can't read requests or call the RPCs
+    caught by: tests/db/access.test.ts > who can see what > a member sees only their own requests
+    caught by: tests/db/access.test.ts > who can see what > reviewers see the whole organization and nothing outside it
+    caught by: tests/db/access.test.ts > who can see what > another tenant's owner sees none of Northwind's data
+    caught by: tests/db/access.test.ts > who can see what > a user can't file a request into an organization they don't belong to
+    caught by: tests/db/access.test.ts > who can see what > a user can't file a request on someone else's behalf
+    caught by: tests/db/workflow.test.ts > request lifecycle > a submitted request can't be edited, even by its author
+    caught by: tests/db/workflow.test.ts > roles > a promotion takes effect immediately, and so does the demotion
+M8 deleting a draft deletes its audit entries: 1 failed | 27 passed (28)
+    caught by: tests/db/access.test.ts > who can see what > deleting a draft keeps its entries in the audit log, and adds one
+M9 role changes not logged: 1 failed | 27 passed (28)
+    caught by: tests/db/workflow.test.ts > roles > every role change is logged, and only owners and admins read the log
+M10 every request column writable again (no column grants): 1 failed | 27 passed (28)
+    caught by: tests/db/workflow.test.ts > request lifecycle > a requester can't approve, or write dates and decisions, by writing columns directly
+
+Every mutation was caught by at least one test. All files were restored and the database rebuilt afterwards.

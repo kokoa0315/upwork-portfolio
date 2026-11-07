@@ -1,0 +1,9 @@
+
+ RUN  v4.1.11 <repo>/apps/rescue
+
+
+ Test Files  1 passed (1)
+      Tests  18 passed (18)
+   Start at  18:07:58
+   Duration  969ms (transform 49ms, setup 0ms, import 85ms, tests 278ms, environment 0ms)
+
