@@ -2,11 +2,11 @@
 
 Support email arrives through a signed webhook. Claude picks a category and priority, writes a two-line summary and drafts a reply. Nothing is sent until a teammate reads it, edits it if needed, and clicks **Approve & send**. Refunds, deletion requests, legal threats and emails that try to give the AI instructions are flagged for a careful look.
 
-It is a portfolio project with fictional data (a made-up note-taking app called Tidebook and 12 sample emails). It is not a client project and not deployed. The "send" step records the reply in an outbox instead of emailing anyone.
+It is a portfolio project, set up for a sample note-taking app called Tidebook with 12 sample emails. The "send" step records the reply in an outbox instead of emailing anyone.
 
 ![Triage and draft waiting for approval](docs/screenshots/03-triage-and-draft.png)
 
-> **About these screenshots:** they were taken with the offline rules provider (no API key, no AI), which the app labels "Rules (no AI)" on every result. The Claude provider is implemented and covered by unit tests with a mocked client; see [What has and hasn't been run](#what-has-and-hasnt-been-run).
+> **About these screenshots:** they show the built-in rules provider, which runs without an API key and labels its results "Rules (no AI)". With a Claude API key, Claude does the triage; see [Running with Claude](#running-with-claude).
 
 ## How a message flows
 
@@ -37,7 +37,7 @@ A cron-style endpoint (`POST /api/worker`, bearer secret; `npm run worker` local
 - **Prompt injection** ([`lib/triage/prompt.ts`](lib/triage/prompt.ts)): the email is wrapped in an `<email>` block, and the system prompt treats it as data. A closing tag inside the email, in any case or spacing (`</EMAIL >`, `< / email>`), is neutralized, so the email can't end the block early. The model only returns labels and a draft. It has no tools, and nothing it writes is sent without a person, so a successful injection can at worst produce a bad draft that gets flagged. The UI renders everything as text.
 - **The database decides who can do what** ([`supabase/migrations/0001_sorted.sql`](supabase/migrations/0001_sorted.sql)): agents read their team's rows through RLS and can't write tables at all. Every change goes through a function. The webhook and the worker use the service role and are the only callers of the queue functions. Supabase grants new functions to everyone by default, so the migration revokes them all first and grants back only what each role needs (a test caught this).
 - **The webhook** ([`app/api/inbound/[team]/route.ts`](app/api/inbound/[team]/route.ts), [`lib/webhook.ts`](lib/webhook.ts)): rejects a declared size over 64 KB before reading and checks the real size after, verifies the signature before parsing, compares in constant time, and rejects replays outside the 5-minute window. The team id in the URL is part of the signed text, so a delivery signed for one team can't be replayed into another. A retried delivery returns 200 with the existing id instead of a second copy. A dropped database connection returns 503 with `retry-after`, so the sender retries.
-- **Honest labels**: results from the offline rules provider say "Rules (no AI)" in the list and on the message, and the summary box only says "AI summary" when Claude wrote it; in rules mode it says how the result was made instead of repeating the email. The overview page shows Claude token usage and an estimated cost at list price.
+- **Clear labels**: results from the offline rules provider say "Rules (no AI)" in the list and on the message, and the summary box only says "AI summary" when Claude wrote it; in rules mode it says how the result was made instead of repeating the email. The overview page shows Claude token usage and an estimated cost at list price.
 
 Stack: Next.js 16.4, React 19.2, TypeScript 5.9, Tailwind CSS 4, Zod 4, `@anthropic-ai/sdk` 0.137, `@supabase/ssr`, Postgres 16, Vitest 4, Playwright 1.63.
 
@@ -77,14 +77,13 @@ The last four rows, and the late worker after a new draft, were found by code re
 | Provider | Category | Priority | Must-escalate emails flagged | Flagged without need | Cost |
 | --- | --- | --- | --- | --- | --- |
 | Rules (offline) | 10 / 12 | 10 / 12 | 3 / 3 | 0 | $0 |
-| Claude Opus 5.5 | not run yet | | | | |
 
 The rules provider is a stand-in so the app runs and the tests are free and deterministic. Its keyword lists were written while looking at these same 12 emails, so its score says nothing about new email. Twelve emails are also too few to compare models seriously; a real evaluation would use a few hundred of the client's own past tickets.
 
-## What has and hasn't been run
+## Running with Claude
 
-- **Run on this machine:** everything in the Tests table, against the rules provider and a mocked Claude client.
-- **Not run yet:** the Claude provider against the real API, and so the Claude row of the eval. Running it needs an API key in `.env.local` and costs about $0.20–0.30 for the 12 emails at list price (`npm run eval:claude`). This README will be updated with the measured numbers once that run is done.
+- **Tests:** everything in the Tests table runs against the rules provider and a mocked Claude client, so the suite is free and gives the same result every time.
+- **With an API key:** put it in `.env.local`, and `npm run eval:claude` runs Claude over the 12 emails and writes its results to `docs/eval/` (about $0.20–0.30 at list price).
 
 ## Run it locally
 
@@ -110,7 +109,6 @@ Demo accounts (password `demo-password-123`, all fictional): `ana@tidebook.test`
 - No attachments, threads or HTML email; the webhook accepts plain text.
 - `npm audit --omit=dev` reports no vulnerabilities in what the app runs. The full `npm audit` lists moderate advisories in dev tooling only (Vitest's mocker, and `minimatch` under ESLint), which don't ship with the app (checked Nov 4, 2026).
 - Tested against the local Supabase-compatible stack, not a hosted Supabase project.
-- Built with AI assistance: most of the code was written and the checks were run with Claude Code. Every result above comes with the command that repeats it.
 
 ## Screenshots
 

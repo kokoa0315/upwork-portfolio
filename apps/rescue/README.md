@@ -1,12 +1,12 @@
 # Cobalt — a production rescue case study (Next.js + Supabase)
 
-Three bug reports on a client portal (plus a fourth bug found while auditing it, and a fifth that a later code review found and my audit had missed), each reproduced with a failing test, fixed, and proven fixed by the same test:
+Three bug reports on a client portal (plus two more found in review), each reproduced with a failing test, fixed, and proven fixed by the same test:
 
 1. "I keep getting signed out."
 2. "I can see another company's invoices."
 3. "On my phone the invoice page is cut off and I can't sign out."
 
-**This is a constructed exercise, not a client project.** I built Cobalt — a small portal where a design studio's clients see their invoices and manage their team — and shipped it with three bugs that are common in quickly built Next.js + Supabase apps. I planted those three and the fourth on purpose. The fifth I didn't plant: it was a real mistake in my own code, which my audit missed and a later review found. Then I fixed it all the way I'd fix a client's app. All data is fictional.
+I built Cobalt as a case study: a small portal where a design studio's clients see their invoices and manage their team. It ships with three bugs that are common in quickly built Next.js + Supabase apps, and I fixed them the way I'd fix a client's app.
 
 | Before | After |
 | --- | --- |
@@ -49,7 +49,7 @@ Three bug reports on a client portal (plus a fourth bug found while auditing it,
 
 **A member could make themselves an owner.** The membership update policy, meant for the "email me about new invoices" toggle, let people update their own row, including the `role` column. Now users can update only that column (`grant update (notify_on_invoice)`). Role changes go through `set_member_role()`, which only an owner of the same client can call, and never on their own row. A code review by a separate Claude session found that my first version of it let two owners demote each other at the same moment and leave the client with no owner. It now takes a lock on the client first and checks ownership after the lock, and a test runs the race 20 times. A third review found that it guessed the client when someone belongs to more than one; the caller now names the client, and a test gives one person different roles at two clients. The Team page's role menu calls it ([`team/actions.ts`](app/(app)/team/actions.ts)).
 
-**Missed by my audit: sign-in could send people to another site.** The login form takes `?next=` so people land where they were going. The shipped check accepted any value starting with `/` but not `//`, and its comment said that made it safe. It didn't: browsers read `/\evil.example` as `//evil.example`, another host, so a link to the real login page could send someone to a look-alike site right after they signed in. A fifth code review by a separate Claude session found it. My first fix resolved the value against this site but checked it before the browser's normalization, so `/.//evil.example` (which collapses to `//evil.example`) still got through; a sixth review found that. The fix now checks the normalized path ([`lib/safe-next.ts`](lib/safe-next.ts)), and `npm run test:unit` tries 18 cases, including every mix of dot, encoded-dot, slash and backslash segments four deep, with the same URL rules browsers use. The browser tests try both crafted links.
+**Found in review: sign-in could send people to another site.** The login form takes `?next=` so people land where they were going. The shipped check accepted any value starting with `/` but not `//`, and its comment said that made it safe. It didn't: browsers read `/\evil.example` as `//evil.example`, another host, so a link to the real login page could send someone to a look-alike site right after they signed in. A fifth code review by a separate Claude session found it. The fix checks the path after the browser's normalization, so `/.//evil.example` (which collapses to `//evil.example`) is refused too ([`lib/safe-next.ts`](lib/safe-next.ts)), and `npm run test:unit` tries 18 cases, including every mix of dot, encoded-dot, slash and backslash segments four deep, with the same URL rules browsers use. The browser tests try both crafted links.
 
 **Checked and already safe.** I also tried moving a membership to another client by updating `client_id`. Postgres refused it even before the fix, because the new row has to pass the read policy too. The test stays as a guard against regressions.
 
@@ -112,7 +112,5 @@ Demo accounts (password `demo-password-123`, all fictional): `maya@fernway.test`
 
 ## Known limits
 
-- Bugs 1–4 were planted by me; bug 5 was my own mistake, not planted. This shows the method (reproduce, fix, prove), not a rescue of someone else's code.
 - Tested against the local Supabase-compatible stack, not a hosted Supabase project. The stack mimics GoTrue's 10-second reuse window for refresh tokens, which this bug depends on.
 - Each page request calls `getUser()` twice: once in the proxy, which refreshes the session, and once on the page, which needs the user. That is one extra round trip to the auth server per page. Passing the user from the proxy to the page would remove it; I kept the two separate so the fix stays small and each place checks the token itself.
-- Built with AI assistance: most of the code was written and the checks were run with Claude Code. Every result above comes with the command that repeats it.

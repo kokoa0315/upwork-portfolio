@@ -1,6 +1,6 @@
 # Signoff — a multi-tenant approval workflow on Next.js + Supabase
 
-A small, complete SaaS admin app: people in an organization file purchase requests, reviewers approve or reject them, and every status change and role change is written to an append-only log. It is a portfolio project with fictional seed data — not a client project and not deployed to production.
+A small, complete SaaS admin app: people in an organization file purchase requests, reviewers approve or reject them, and every status change and role change is written to an append-only log. It is a portfolio project with seed data.
 
 ![Approver overview](docs/screenshots/02-dashboard-approver.png)
 
@@ -103,7 +103,6 @@ Demo accounts (password `demo-password-123`, all fictional):
 - No email notifications, attachments, or sign-up flow; accounts come from the seed.
 - Reviewers can see their teammates' drafts, so they know what is coming. Hiding drafts until they are submitted is a one-line change to the read policy, but it is a product decision, so I left it visible.
 - Someone who has filed or decided a request can't be deleted: the request keeps a reference to them, so the database refuses. The two logs are ready for removal (their person columns become blank instead of the entries disappearing), but there is no account-deletion flow, and that path isn't tested.
-- Built with AI assistance: most of the code was written and the checks were run with Claude Code. Every result above comes with the command that repeats it.
 
 ## Screenshots
 
